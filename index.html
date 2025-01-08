@@ -1,95 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Day Length Information</title>
-    <style>
-        body {
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-
-        .smaller {
-            font-size: 1rem;
-            color: grey;
-        }
-
-        .medium {
-            font-size: 1.5rem;
-        }
-
-        .large {
-            font-size: 4rem;
-            font-weight: bold;
-        }
-    </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day Length Mirror</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .small {
+      font-size: 1.2rem;
+      margin: 0.4em 0;
+      text-align: center;
+    }
+    .medium {
+      font-size: 2rem;
+      margin: 0.5em 0;
+      text-align: center;
+    }
+    .large {
+      font-size: 3.5rem;
+      margin: 0.5em 0;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div id="content">
-        <div class="smaller" id="today"></div>
-        <div class="medium">Day length same as</div>
-        <div class="large" id="same-day"></div>
-        <div class="smaller" id="equinox"></div>
-        <div class="smaller" id="solstice"></div>
-    </div>
+  <div class="small" id="today"></div>
+  <div class="medium">Day length mirrors</div>
+  <div class="large" id="xDate"></div>
+  <div class="small" id="daysTillEquinox"></div>
+  <div class="small" id="daysTillSummerSolstice"></div>
 
-    <script>
-        function calculateDayInfo() {
-            const today = new Date();
-            const year = today.getFullYear();
+  <script>
+    (function() {
+      function formatDate(dateObj) {
+        const opts = { month: 'short', day: 'numeric' };
+        return dateObj.toLocaleDateString('en-US', opts);
+      }
 
-            // Fixed dates for solstices and equinoxes
-            const decSolstice = new Date(`${year}-12-21`);
-            const junSolstice = new Date(`${year}-06-21`);
-            const marEquinox = new Date(`${year}-03-21`);
-            const sepEquinox = new Date(`${year}-09-21`);
+      function daysBetween(d1, d2) {
+        const msPerDay = 24 * 60 * 60 * 1000;
+        return Math.round((d2 - d1) / msPerDay);
+      }
 
-            // Determine closest solstice
-            const daysToDecSolstice = (decSolstice - today) / (1000 * 60 * 60 * 24);
-            const daysToJunSolstice = (junSolstice - today) / (1000 * 60 * 60 * 24);
+      function getSolsticeEquinoxes(year) {
+        return {
+          mar21: new Date(year, 2, 21),
+          jun21: new Date(year, 5, 21),
+          sep21: new Date(year, 8, 21),
+          dec21: new Date(year, 11, 21)
+        };
+      }
 
-            // Find "same day" distance from Dec Solstice but on the other side
-            const daysSinceDecSolstice = Math.round(Math.abs(daysToDecSolstice));
-            const sameDayDate = new Date(decSolstice);
-            sameDayDate.setDate(decSolstice.getDate() + daysSinceDecSolstice);
+      function getLastSolstice(dateObj) {
+        const year = dateObj.getFullYear();
+        const { jun21, dec21 } = getSolsticeEquinoxes(year);
+        const { dec21: dec21Prev } = getSolsticeEquinoxes(year - 1);
 
-            // Calculate next equinox
-            let daysToNextEquinox;
-            if (today < marEquinox) {
-                daysToNextEquinox = Math.round((marEquinox - today) / (1000 * 60 * 60 * 24));
-            } else if (today < sepEquinox) {
-                daysToNextEquinox = Math.round((sepEquinox - today) / (1000 * 60 * 60 * 24));
-            } else {
-                daysToNextEquinox = Math.round(((new Date(`${year + 1}-03-21`)) - today) / (1000 * 60 * 60 * 24));
-            }
-
-            // Calculate next solstice
-            let daysToNextSolstice;
-            if (today < junSolstice) {
-                daysToNextSolstice = Math.round(daysToJunSolstice);
-            } else if (today < decSolstice) {
-                daysToNextSolstice = Math.round(daysToDecSolstice);
-            } else {
-                daysToNextSolstice = Math.round(((new Date(`${year + 1}-06-21`)) - today) / (1000 * 60 * 60 * 24));
-            }
-
-            // Update HTML content
-            document.getElementById("today").textContent = `Today is ${today.toDateString()}`;
-            document.getElementById("same-day").textContent = sameDayDate.toDateString();
-            document.getElementById("equinox").textContent = `${daysToNextEquinox} days till the next equinox`;
-            document.getElementById("solstice").textContent = `${daysToNextSolstice} days till the next summer solstice`;
+        if (dateObj < jun21) {
+          return dec21Prev;
+        } else if (dateObj < dec21) {
+          return jun21;
         }
+        return dec21;
+      }
 
-        calculateDayInfo();
-    </script>
+      function getNextEquinox(dateObj) {
+        const year = dateObj.getFullYear();
+        const { mar21, sep21 } = getSolsticeEquinoxes(year);
+        const { mar21: mar21Next } = getSolsticeEquinoxes(year + 1);
+
+        if (dateObj < mar21) return mar21;
+        if (dateObj < sep21) return sep21;
+        return mar21Next;
+      }
+
+      function getNextSummerSolstice(dateObj) {
+        const year = dateObj.getFullYear();
+        const { jun21 } = getSolsticeEquinoxes(year);
+        const { jun21: jun21Next } = getSolsticeEquinoxes(year + 1);
+
+        return (dateObj < jun21) ? jun21 : jun21Next;
+      }
+
+      const todayObj = new Date();
+      const lastSolsticeDate = getLastSolstice(todayObj);
+      const daysSinceSolstice = daysBetween(lastSolsticeDate, todayObj);
+      const mirrorDate = new Date(lastSolsticeDate);
+      mirrorDate.setDate(mirrorDate.getDate() - daysSinceSolstice);
+
+      const nextEq = getNextEquinox(todayObj);
+      const nextSum = getNextSummerSolstice(todayObj);
+      const eqDays = daysBetween(todayObj, nextEq);
+      const sumDays = daysBetween(todayObj, nextSum);
+
+      document.getElementById("today").textContent = "Today: " + formatDate(todayObj);
+      document.getElementById("xDate").textContent = formatDate(mirrorDate);
+      document.getElementById("daysTillEquinox").textContent = eqDays + " days until the next equinox";
+      document.getElementById("daysTillSummerSolstice").textContent = sumDays + " days until the next summer solstice";
+    })();
+  </script>
 </body>
 </html>
