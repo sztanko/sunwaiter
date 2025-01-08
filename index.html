@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day Length Information</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .smaller {
+            font-size: 1rem;
+            color: grey;
+        }
+
+        .medium {
+            font-size: 1.5rem;
+        }
+
+        .large {
+            font-size: 4rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div class="smaller" id="today"></div>
+        <div class="medium">Day length same as</div>
+        <div class="large" id="same-day"></div>
+        <div class="smaller" id="equinox"></div>
+        <div class="smaller" id="solstice"></div>
+    </div>
+
+    <script>
+        function calculateDayInfo() {
+            const today = new Date();
+            const year = today.getFullYear();
+
+            // Fixed dates for solstices and equinoxes
+            const decSolstice = new Date(`${year}-12-21`);
+            const junSolstice = new Date(`${year}-06-21`);
+            const marEquinox = new Date(`${year}-03-21`);
+            const sepEquinox = new Date(`${year}-09-21`);
+
+            // Determine closest solstice
+            const daysToDecSolstice = (decSolstice - today) / (1000 * 60 * 60 * 24);
+            const daysToJunSolstice = (junSolstice - today) / (1000 * 60 * 60 * 24);
+
+            // Find "same day" distance from Dec Solstice but on the other side
+            const daysSinceDecSolstice = Math.round(Math.abs(daysToDecSolstice));
+            const sameDayDate = new Date(decSolstice);
+            sameDayDate.setDate(decSolstice.getDate() + daysSinceDecSolstice);
+
+            // Calculate next equinox
+            let daysToNextEquinox;
+            if (today < marEquinox) {
+                daysToNextEquinox = Math.round((marEquinox - today) / (1000 * 60 * 60 * 24));
+            } else if (today < sepEquinox) {
+                daysToNextEquinox = Math.round((sepEquinox - today) / (1000 * 60 * 60 * 24));
+            } else {
+                daysToNextEquinox = Math.round(((new Date(`${year + 1}-03-21`)) - today) / (1000 * 60 * 60 * 24));
+            }
+
+            // Calculate next solstice
+            let daysToNextSolstice;
+            if (today < junSolstice) {
+                daysToNextSolstice = Math.round(daysToJunSolstice);
+            } else if (today < decSolstice) {
+                daysToNextSolstice = Math.round(daysToDecSolstice);
+            } else {
+                daysToNextSolstice = Math.round(((new Date(`${year + 1}-06-21`)) - today) / (1000 * 60 * 60 * 24));
+            }
+
+            // Update HTML content
+            document.getElementById("today").textContent = `Today is ${today.toDateString()}`;
+            document.getElementById("same-day").textContent = sameDayDate.toDateString();
+            document.getElementById("equinox").textContent = `${daysToNextEquinox} days till the next equinox`;
+            document.getElementById("solstice").textContent = `${daysToNextSolstice} days till the next summer solstice`;
+        }
+
+        calculateDayInfo();
+    </script>
+</body>
+</html>
